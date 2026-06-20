@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ИС Деканат | Дипломный проект</title>
+    <link rel="stylesheet" href="./styles.css?v=20260520-status" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">ИД</span>
+        <div>
+          <strong>ИС Деканат</strong>
+          <small>дипломный проект</small>
+        </div>
+      </div>
+      <nav>
+        <button class="nav-item active" data-view="dashboard">Дашборд</button>
+        <button class="nav-item" data-view="analytics">Аналитика</button>
+        <button class="nav-item" data-view="students">Студенты</button>
+        <button class="nav-item" data-view="groups">Группы</button>
+        <button class="nav-item" data-view="statements">Ведомости</button>
+        <button class="nav-item" data-view="orders">Приказы</button>
+      </nav>
+      <div class="connection" id="connectionStatus">Проверка API...</div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">Дашборд деканата</h1>
+          <p>Учет студентов, ведомостей, приказов и посещаемости</p>
+        </div>
+        <button class="primary-button" id="refreshButton">Обновить</button>
+      </header>
+
+      <section class="view active" id="dashboardView">
+        <div class="metrics">
+          <article class="metric">
+            <span>Активные студенты</span>
+            <strong id="activeStudents">0</strong>
+          </article>
+          <article class="metric">
+            <span>Группы</span>
+            <strong id="groupsCount">0</strong>
+          </article>
+          <article class="metric warning">
+            <span>Открытые ведомости</span>
+            <strong id="openStatements">0</strong>
+          </article>
+          <article class="metric danger">
+            <span>Долги</span>
+            <strong id="debtsCount">0</strong>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Контингент по формам</h2>
+            </div>
+            <div id="formsChart" class="bars"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Посещаемость за 14 дней</h2>
+            </div>
+            <div id="attendanceChart" class="bars"></div>
+          </section>
+
+          <section class="panel wide">
+            <div class="panel-head">
+              <h2>Посещаемость по группам</h2>
+            </div>
+            <div class="table-wrap compact">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Группа</th>
+                    <th>Присутствия</th>
+                    <th>Уважительные</th>
+                    <th>Прогулы</th>
+                    <th>Процент</th>
+                  </tr>
+                </thead>
+                <tbody id="attendanceGroups"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Срочные задачи</h2>
+            </div>
+            <ul class="task-list" id="urgentList"></ul>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="analyticsView">
+        <div class="analytics-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Оценки по журналу</h2>
+            </div>
+            <div id="gradesChart" class="pie-card"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Долги по группам</h2>
+            </div>
+            <div id="debtsByGroupChart" class="column-chart"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Приказы по типам</h2>
+            </div>
+            <div id="ordersByTypeChart" class="pie-card"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Студенты по статусам</h2>
+            </div>
+            <div id="studentsByStatusChart" class="column-chart"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="studentsView">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Студенты</h2>
+          </div>
+          <div class="student-form">
+            <input id="newLastName" type="text" placeholder="Фамилия" />
+            <input id="newFirstName" type="text" placeholder="Имя" />
+            <input id="newMiddleName" type="text" placeholder="Отчество" />
+            <select id="newGroupId"></select>
+            <input id="newRecordBook" type="text" placeholder="Номер зачетки" />
+            <select id="newStudyForm">
+              <option value="full_time">Очная</option>
+              <option value="part_time">Заочная</option>
+              <option value="mixed">Очно-заочная</option>
+              <option value="evening">Вечерняя</option>
+            </select>
+            <select id="newFunding">
+              <option value="budget">Бюджет</option>
+              <option value="contract">Договор</option>
+              <option value="targeted">Целевое</option>
+            </select>
+            <button class="primary-button" id="addStudentButton">Добавить</button>
+          </div>
+          <div class="form-message" id="studentFormMessage"></div>
+          <div class="filters">
+            <input id="studentSearch" type="search" placeholder="ФИО студента" />
+            <select id="studentStatus">
+              <option value="">Все статусы</option>
+              <option value="active">Обучается</option>
+              <option value="academic_leave">Академ</option>
+              <option value="expelled">Отчислен</option>
+              <option value="graduated">Выпускник</option>
+            </select>
+            <input id="studentGroup" type="text" placeholder="Группа" />
+            <button class="primary-button" id="applyStudentFilters">Найти</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th><button class="sort-button" data-sort="name">ФИО</button></th>
+                  <th><button class="sort-button" data-sort="group_name">Группа</button></th>
+                  <th><button class="sort-button" data-sort="record_book_number">Зачетка</button></th>
+                  <th><button class="sort-button" data-sort="status">Статус</button></th>
+                  <th><button class="sort-button" data-sort="form">Форма</button></th>
+                  <th><button class="sort-button" data-sort="funding">Основа</button></th>
+                  <th><button class="sort-button" data-sort="specialty_name">Специальность</button></th>
+                </tr>
+              </thead>
+              <tbody id="studentsTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="groupsView">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Академические группы</h2>
+          </div>
+          <div class="cards" id="groupsCards"></div>
+        </section>
+      </section>
+
+      <section class="view" id="statementsView">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Ведомости</h2>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Номер</th>
+                  <th>Дата</th>
+                  <th>Группа</th>
+                  <th>Дисциплина</th>
+                  <th>Преподаватель</th>
+                  <th>Оценок</th>
+                  <th>Долгов</th>
+                  <th>Статус</th>
+                </tr>
+              </thead>
+              <tbody id="statementsTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="ordersView">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Приказы</h2>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Номер</th>
+                  <th>Дата</th>
+                  <th>Тип</th>
+                  <th>Студент</th>
+                  <th>Группа</th>
+                  <th>Название</th>
+                  <th>Основание</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js?v=20260520-status"></script>
+  </body>
+</html>
