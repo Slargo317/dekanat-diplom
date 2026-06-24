@@ -103,6 +103,7 @@ let apiOnline = false;
 let studentRows = [];
 let groupRows = [];
 let studentSort = { key: "name", direction: "asc" };
+let selectedGroup = "";
 
 async function apiGet(path) {
   const response = await fetch(`${API_URL}${path}`);
@@ -143,7 +144,7 @@ function text(value) {
 function studentStatusClass(status) {
   const classes = {
     active: "status-green",
-    graduated: "status-green",
+    graduated: "status-blue",
     academic_leave: "status-orange",
     expelled: "status-red",
   };
@@ -341,8 +342,20 @@ async function loadStudents() {
   if (status) params.set("status", status);
   if (group) params.set("group", group);
 
+  selectedGroup = group;
   studentRows = await safeLoad(`/students?${params.toString()}`, demo.students);
+  if (STATIC_DEMO) {
+    const normalizedQuery = q.toLocaleLowerCase("ru-RU");
+    studentRows = demo.students.filter((row) => {
+      const matchesGroup = !group || row.group_name === group;
+      const matchesStatus = !status || row.status === status;
+      const haystack = `${fullName(row)} ${row.record_book_number || ""} ${row.specialty_name || ""}`.toLocaleLowerCase("ru-RU");
+      const matchesQuery = !normalizedQuery || haystack.includes(normalizedQuery);
+      return matchesGroup && matchesStatus && matchesQuery;
+    });
+  }
   renderStudents();
+  if (groupRows.length) renderGroups();
 }
 
 function getStudentSortValue(row, key) {
@@ -384,17 +397,32 @@ function renderStudents() {
 async function loadGroups() {
   groupRows = await safeLoad("/students/groups", demo.groups);
   renderGroupSelect();
+  renderGroups();
+}
+
+async function selectGroup(name) {
+  selectedGroup = name;
+  document.getElementById("studentGroup").value = name;
+  await loadStudents();
+  renderGroups();
+  switchView("students");
+}
+
+function renderGroups() {
   document.getElementById("groupsCards").innerHTML = groupRows
     .map(
-      (row) => `
-        <article class="group-card">
+      (row) => {
+        const active = row.name === selectedGroup;
+        return `
+        <button class="group-card${active ? " active" : ""}" type="button" data-group="${row.name}" aria-label="Показать студентов группы ${row.name}">
           <strong>${row.name}</strong>
           <span>${row.specialty_name}</span>
           <span>Год набора: ${row.set_year}</span>
           <span>Всего студентов: ${row.students_count}</span>
           <span>Активных: ${row.active_count}</span>
-        </article>
-      `,
+        </button>
+      `;
+      },
     )
     .join("");
 }
@@ -558,6 +586,11 @@ document.getElementById("applyStudentFilters").addEventListener("click", loadStu
 document.getElementById("addStudentButton").addEventListener("click", addStudent);
 document.getElementById("studentSearch").addEventListener("keydown", (event) => {
   if (event.key === "Enter") loadStudents();
+});
+document.getElementById("groupsCards").addEventListener("click", (event) => {
+  const card = event.target.closest(".group-card");
+  if (!card) return;
+  selectGroup(card.dataset.group);
 });
 
 refreshAll();
