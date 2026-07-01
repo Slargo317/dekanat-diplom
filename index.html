@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ИС Деканат | Дипломный проект</title>
-    <link rel="stylesheet" href="./styles.css?v=20260624-students" />
+    <link rel="stylesheet" href="./styles.css?v=20260701-auth" />
   </head>
   <body>
     <aside class="sidebar">
@@ -32,8 +32,32 @@
           <h1 id="pageTitle">Дашборд деканата</h1>
           <p>Учет студентов, ведомостей, приказов и посещаемости</p>
         </div>
-        <button class="primary-button" id="refreshButton">Обновить</button>
+        <div class="account-panel">
+          <button class="account-button" id="accountButton" type="button">Войти</button>
+          <div class="account-details" id="accountDetails"></div>
+        </div>
       </header>
+
+      <div class="login-modal hidden" id="loginModal" aria-hidden="true">
+        <form class="login-card" id="loginForm">
+          <div class="panel-head">
+            <h2>Вход в систему</h2>
+            <button class="icon-button" id="closeLogin" type="button" aria-label="Закрыть">×</button>
+          </div>
+          <label>
+            Учетная запись
+            <select id="loginUser"></select>
+          </label>
+          <label>
+            Пароль
+            <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Введите пароль" />
+          </label>
+          <div class="login-hint" id="loginHint"></div>
+          <div class="login-actions">
+            <button class="primary-button" type="submit">Войти</button>
+          </div>
+        </form>
+      </div>
 
       <section class="view active" id="dashboardView">
         <div class="metrics">
@@ -246,6 +270,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20260624-students"></script>
+    <script src="./app.js?v=20260701-auth"></script>
   </body>
 </html>

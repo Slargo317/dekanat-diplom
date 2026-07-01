@@ -147,6 +147,99 @@ h1 {
   background: var(--accent-dark);
 }
 
+.account-panel {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.account-button {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  padding: 9px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  min-width: 112px;
+}
+
+.account-button:hover {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.account-details {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: right;
+}
+
+.nav-item.hidden,
+.hidden {
+  display: none !important;
+}
+
+.login-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(16, 32, 51, 0.42);
+}
+
+.login-card {
+  width: min(420px, 100%);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 24px 60px rgba(16, 32, 51, 0.22);
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.login-card label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.login-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.login-hint {
+  min-height: 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.login-hint.error {
+  color: var(--red);
+}
+
+.icon-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.icon-button:hover {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
 .view {
   display: none;
 }
@@ -639,5 +732,14 @@ tbody tr:hover {
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .account-panel {
+    justify-items: stretch;
+    width: 100%;
+  }
+
+  .account-details {
+    text-align: left;
   }
 }

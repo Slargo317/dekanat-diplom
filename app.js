@@ -117,11 +117,45 @@ const demo = {
   ],
 };
 
+const accounts = {
+  admin: {
+    name: "Администратор",
+    role: "полный доступ",
+    password: "admin123",
+    views: ["dashboard", "analytics", "students", "groups", "statements", "orders"],
+    canWriteStudents: true,
+  },
+  operator: {
+    name: "Сотрудник деканата",
+    role: "студенты и ведомости",
+    password: "operator123",
+    views: ["dashboard", "students", "groups", "statements"],
+    canWriteStudents: true,
+  },
+  teacher: {
+    name: "Преподаватель",
+    role: "просмотр успеваемости",
+    password: "teacher123",
+    views: ["dashboard", "analytics", "students", "groups", "statements"],
+    canWriteStudents: false,
+  },
+  viewer: {
+    name: "Наблюдатель",
+    role: "только обзор",
+    password: "viewer123",
+    views: ["dashboard", "groups"],
+    canWriteStudents: false,
+  },
+};
+
+const AUTH_KEY = "dekanat_current_user";
+
 let apiOnline = false;
 let studentRows = [];
 let groupRows = [];
 let studentSort = { key: "name", direction: "asc" };
 let selectedGroup = "";
+let currentUser = accounts[localStorage.getItem(AUTH_KEY)] ? localStorage.getItem(AUTH_KEY) : "";
 
 async function apiGet(path) {
   const response = await fetch(`${API_URL}${path}`);
@@ -376,6 +410,97 @@ async function loadStudents() {
   if (groupRows.length) renderGroups();
 }
 
+function currentAccount() {
+  return currentUser ? accounts[currentUser] : null;
+}
+
+function allowedViews() {
+  return currentAccount()?.views || ["dashboard"];
+}
+
+function canAccessView(view) {
+  return allowedViews().includes(view);
+}
+
+function canWriteStudents() {
+  return Boolean(currentAccount()?.canWriteStudents);
+}
+
+function renderLoginUsers() {
+  const select = document.getElementById("loginUser");
+  select.innerHTML = Object.entries(accounts)
+    .map(([login, account]) => `<option value="${login}">${account.name} - ${account.role}</option>`)
+    .join("");
+  updateLoginHint();
+}
+
+function updateLoginHint() {
+  const account = accounts[document.getElementById("loginUser").value];
+  const hint = document.getElementById("loginHint");
+  hint.className = "login-hint";
+  hint.textContent = account ? `Демо-пароль: ${account.password}` : "";
+}
+
+function openLogin() {
+  document.getElementById("loginPassword").value = "";
+  updateLoginHint();
+  document.getElementById("loginModal").classList.remove("hidden");
+  document.getElementById("loginModal").setAttribute("aria-hidden", "false");
+  document.getElementById("loginPassword").focus();
+}
+
+function closeLogin() {
+  document.getElementById("loginModal").classList.add("hidden");
+  document.getElementById("loginModal").setAttribute("aria-hidden", "true");
+}
+
+function applyAccess() {
+  const account = currentAccount();
+  document.getElementById("accountButton").textContent = account ? "Выйти" : "Войти";
+  document.getElementById("accountDetails").textContent = account ? `${account.name}: ${account.role}` : "Гость: только дашборд";
+
+  document.querySelectorAll(".nav-item").forEach((button) => {
+    button.classList.toggle("hidden", !canAccessView(button.dataset.view));
+  });
+
+  const studentForm = document.querySelector(".student-form");
+  if (studentForm) studentForm.classList.toggle("hidden", !canWriteStudents());
+
+  const activeView = document.querySelector(".view.active")?.id.replace("View", "");
+  if (activeView && !canAccessView(activeView)) switchView(allowedViews()[0]);
+}
+
+function submitLogin(event) {
+  event.preventDefault();
+  const login = document.getElementById("loginUser").value;
+  const password = document.getElementById("loginPassword").value;
+  const account = accounts[login];
+  const hint = document.getElementById("loginHint");
+
+  if (!account || account.password !== password) {
+    hint.textContent = "Неверный пароль для выбранной учетной записи.";
+    hint.className = "login-hint error";
+    return;
+  }
+
+  currentUser = login;
+  localStorage.setItem(AUTH_KEY, login);
+  closeLogin();
+  applyAccess();
+  refreshAll();
+}
+
+function toggleAccount() {
+  if (!currentAccount()) {
+    openLogin();
+    return;
+  }
+  currentUser = "";
+  localStorage.removeItem(AUTH_KEY);
+  applyAccess();
+  switchView("dashboard");
+}
+
 function getStudentSortValue(row, key) {
   if (key === "name") return fullName(row);
   return row[key] || "";
@@ -455,6 +580,12 @@ function renderGroupSelect() {
 
 async function addStudent() {
   const message = document.getElementById("studentFormMessage");
+  if (!canWriteStudents()) {
+    message.textContent = "У этой учетной записи нет прав на добавление студентов.";
+    message.className = "form-message error";
+    return;
+  }
+
   const payload = {
     last_name: document.getElementById("newLastName").value.trim(),
     first_name: document.getElementById("newFirstName").value.trim(),
@@ -567,10 +698,11 @@ async function refreshAll() {
 }
 
 function switchView(view) {
+  if (!canAccessView(view)) view = allowedViews()[0];
   document.querySelectorAll(".view").forEach((node) => node.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach((node) => node.classList.remove("active"));
   document.getElementById(`${view}View`).classList.add("active");
-  document.querySelector(`[data-view="${view}"]`).classList.add("active");
+  document.querySelector(`[data-view="${view}"]`)?.classList.add("active");
 
   const titles = {
     dashboard: "Дашборд деканата",
@@ -599,7 +731,13 @@ document.querySelectorAll(".sort-button").forEach((button) => {
   });
 });
 
-document.getElementById("refreshButton").addEventListener("click", refreshAll);
+renderLoginUsers();
+applyAccess();
+
+document.getElementById("accountButton").addEventListener("click", toggleAccount);
+document.getElementById("closeLogin").addEventListener("click", closeLogin);
+document.getElementById("loginUser").addEventListener("change", updateLoginHint);
+document.getElementById("loginForm").addEventListener("submit", submitLogin);
 document.getElementById("applyStudentFilters").addEventListener("click", loadStudents);
 document.getElementById("addStudentButton").addEventListener("click", addStudent);
 document.getElementById("studentSearch").addEventListener("keydown", (event) => {
